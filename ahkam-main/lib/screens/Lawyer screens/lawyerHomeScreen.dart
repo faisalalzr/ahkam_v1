@@ -30,12 +30,11 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
   String? selectedStatus = 'Active';
 
   Future<List<Map<String, dynamic>>> fetchThisLawyer() async {
-    QuerySnapshot querySnapshot =
-        await _firestore
-            .collection('account')
-            .where('uid', isEqualTo: widget.lawyer.uid)
-            .limit(1)
-            .get();
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('account')
+        .where('uid', isEqualTo: widget.lawyer.uid)
+        .limit(1)
+        .get();
 
     return querySnapshot.docs
         .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
@@ -43,15 +42,30 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchRequests() async {
-    QuerySnapshot querySnapshot =
-        await _firestore
-            .collection('requests')
-            .where('lawyerId', isEqualTo: widget.lawyer.uid)
-            .get();
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('requests')
+        .where('lawyerId', isEqualTo: widget.lawyer.uid)
+        .get();
 
     return querySnapshot.docs
         .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
         .toList();
+  }
+
+  Widget buildStatusBadge(String label, Color color, IconData icon) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedStatus = selectedStatus == label ? null : label;
+        });
+      },
+      child: StatusBadge(
+        label: label,
+        color: color,
+        icon: icon,
+        isSelected: selectedStatus == label,
+      ),
+    );
   }
 
   @override
@@ -94,11 +108,10 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                     "More services",
                     style: GoogleFonts.lato(fontSize: 17, color: Colors.black),
                   ),
-                  onTap:
-                      () => Get.to(
-                        Morelawyer(lawyer: widget.lawyer),
-                        transition: Transition.noTransition,
-                      ),
+                  onTap: () => Get.to(
+                    Morelawyer(lawyer: widget.lawyer),
+                    transition: Transition.noTransition,
+                  ),
                 ),
                 ListTile(
                   leading: Icon(Icons.settings, color: Colors.black),
@@ -111,7 +124,6 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
               ],
             ),
           ),
-
           appBar: AppBar(
             automaticallyImplyLeading: true,
             elevation: 0,
@@ -135,14 +147,12 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                             CircleAvatar(
                               radius: 20,
                               backgroundColor: Colors.grey.shade200,
-                              backgroundImage:
-                                  lawyerData['imageUrl'] != null &&
-                                          lawyerData['imageUrl'].isNotEmpty
-                                      ? NetworkImage(lawyerData['imageUrl'])
-                                      : const AssetImage(
-                                            'assets/images/brad.webp',
-                                          )
-                                          as ImageProvider,
+                              backgroundImage: lawyerData['imageUrl'] != null &&
+                                      lawyerData['imageUrl'].isNotEmpty
+                                  ? NetworkImage(lawyerData['imageUrl'])
+                                  : const AssetImage(
+                                      'assets/images/brad.webp',
+                                    ) as ImageProvider,
                             ),
                             const SizedBox(width: 8),
                             Column(
@@ -173,16 +183,14 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.notifications_none),
-                  onPressed:
-                      () => Get.to(
-                        InboxScreen(),
-                        transition: Transition.rightToLeftWithFade,
-                      ),
+                  onPressed: () => Get.to(
+                    InboxScreen(),
+                    transition: Transition.rightToLeftWithFade,
+                  ),
                 ),
               ],
             ),
           ),
-
           body: LiquidPullToRefresh(
             onRefresh: () async {
               setState(() {});
@@ -198,74 +206,31 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 10),
-
                   Text(
                     'Case Status',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-
                   SizedBox(height: 10),
-
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedStatus =
-                                  selectedStatus == 'Finished'
-                                      ? null
-                                      : 'Finished';
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: StatusBadge(
-                              label: 'Finished',
-                              color: Color(0xFF4CAF50),
-                              icon: LucideIcons.checkCircle,
-                              isSelected: selectedStatus == 'Finished',
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedStatus =
-                                  selectedStatus == 'Waiting'
-                                      ? null
-                                      : 'Waiting';
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: StatusBadge(
-                              label: 'Waiting',
-                              color: Color(0xFFFFC107),
-                              icon: LucideIcons.timer,
-                              isSelected: selectedStatus == 'Waiting',
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedStatus =
-                                  selectedStatus == 'Active' ? null : 'Active';
-                            });
-                          },
-                          child: StatusBadge(
-                            label: 'Active',
-                            color: Color(0xFF1E3A5F),
-                            icon: LucideIcons.briefcase,
-                            isSelected: selectedStatus == 'Active',
-                          ),
-                        ),
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 10),
+                          buildStatusBadge('Finished', Color(0xFF4CAF50),
+                              LucideIcons.checkCircle),
+                          SizedBox(width: 16),
+                          buildStatusBadge(
+                              'Waiting', Color(0xFFFFC107), LucideIcons.timer),
+                          SizedBox(width: 16),
+                          buildStatusBadge('Active', Color(0xFF1E3A5F),
+                              LucideIcons.briefcase),
+                          SizedBox(width: 10),
+                        ],
+                      ),
                     ),
                   ),
-
                   SizedBox(height: 30),
                   Text(
                     'Consultation Requests',
@@ -288,16 +253,16 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
 
                         List<Map<String, dynamic>> filtered =
                             requests.where((req) {
-                              if (selectedStatus == 'Active') {
-                                return req['status'] == 'Accepted' &&
-                                    req['ended?'] == false;
-                              } else if (selectedStatus == 'Waiting') {
-                                return req['status'] == 'Pending';
-                              } else if (selectedStatus == 'Finished') {
-                                return req['ended?'] == true;
-                              }
-                              return true;
-                            }).toList();
+                          if (selectedStatus == 'Active') {
+                            return req['status'] == 'Accepted' &&
+                                req['ended?'] == false;
+                          } else if (selectedStatus == 'Waiting') {
+                            return req['status'] == 'Pending';
+                          } else if (selectedStatus == 'Finished') {
+                            return req['ended?'] == true;
+                          }
+                          return true;
+                        }).toList();
 
                         if (filtered.isEmpty) {
                           return Center(child: Text('No requests'));
@@ -333,7 +298,6 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
               ),
             ),
           ),
-
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: onItemTapped,
@@ -413,26 +377,23 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? color : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        boxShadow:
-            isSelected
-                ? [
-                  BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ]
-                : [],
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ]
+            : [],
         border: Border.all(color: color.withOpacity(0.6)),
       ),
-
       child: Row(
         children: [
           Icon(icon, size: 16, color: isSelected ? Colors.white : color),
           SizedBox(width: 6),
           Text(
             label,
-
             style: TextStyle(
               color: isSelected ? Colors.white : color,
               fontWeight: FontWeight.bold,

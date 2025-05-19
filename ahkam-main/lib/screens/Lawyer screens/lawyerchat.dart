@@ -312,19 +312,6 @@ class _ChatScreenState extends State<Lawyerchat> {
               ),
             ),
           ),
-          SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: Colors.white,
-            radius: 18,
-            child: IconButton(
-              icon: Icon(
-                Icons.document_scanner,
-                size: 18,
-                color: const Color(0xFF1E3A5F),
-              ),
-              onPressed: () async {},
-            ),
-          ),
           SizedBox(width: 4),
           Obx(() {
             return GestureDetector(
