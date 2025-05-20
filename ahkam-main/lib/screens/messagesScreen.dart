@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -127,28 +128,33 @@ class _MessagesScreenState extends State<MessagesScreen> {
         .toList();
   }
 
-  // User list stream
   Widget _buildUserList() {
-    return Expanded(
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: fetchACCRequests(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Text('');
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error fetching requests'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No requests yet.'));
-          }
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: fetchACCRequests(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error fetching requests'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No requests yet.'));
+        }
 
-          List<Map<String, dynamic>> requests = snapshot.data!;
+        List<Map<String, dynamic>> requests = snapshot.data!;
 
-          return ListView.builder(
+        return LiquidPullToRefresh(
+          onRefresh: () async {
+            setState(() {}); // re-trigger build and refresh data
+          },
+          color: Colors.orange,
+          backgroundColor: Colors.white,
+          showChildOpacityTransition: false,
+          child: ListView.builder(
             itemCount: requests.length,
             itemBuilder: (context, index) {
               final request = requests[index];
-
               var _firestore = FirebaseFirestore.instance;
+
               return FutureBuilder<DocumentSnapshot>(
                 future: _firestore
                     .collection('account')
@@ -172,72 +178,71 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       horizontal: 16,
                     ),
                     child: Card(
-                        color: const Color(0xFFFFF8F2),
-                        elevation: 5,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFFFFF8F2),
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        onLongPress: () {
+                          setState(() {
+                            isSelectionMode = true;
+                            selectedMessages.add(request['id']);
+                          });
+                        },
+                        onTap: () {
+                          if (isSelectionMode) return;
+                          if (request['paid'] == true) {
+                            Get.to(
+                              transition: Transition.rightToLeft,
+                              () => Chat(
+                                receivername: request['lawyerName'] ?? '',
+                                senderId: request["userId"] ?? '',
+                                receiverID: request["lawyerId"] ?? '',
+                                rid: request['rid'] ?? '',
+                                imageurl: lawyerData?["imageUrl"] ?? '',
+                              ),
+                            );
+                          }
+                        },
+                        selected: isSelectionMode &&
+                            selectedMessages.contains(request['id']),
+                        selectedTileColor: Colors.orange[100],
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 15,
+                          horizontal: 20,
                         ),
-                        child: ListTile(
-                          onLongPress: () {
-                            setState(() {
-                              isSelectionMode = true;
-                              selectedMessages.add(request['id']);
-                            });
-                          },
-                          onTap: () {
-                            if (false) {
-                            } else {
-                              if (request['paid'] == true) {
-                                Get.to(
-                                  transition: Transition.rightToLeft,
-                                  () => Chat(
-                                    receivername: request['lawyerName'] ?? '',
-                                    senderId: request["userId"] ?? '',
-                                    receiverID: request["lawyerId"] ?? '',
-                                    rid: request['rid'] ?? '',
-                                    imageurl: lawyerData?["imageUrl"] ?? '',
-                                  ),
-                                );
-                              } else {}
-                            }
-                          },
-                          selected: isSelectionMode &&
-                              selectedMessages.contains(request['id']),
-                          selectedTileColor: Colors.orange[100],
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                          title: Text(
-                            lawyerData?["name"] ?? 'Unknown User',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            isPaid ? "Tap to chat" : "Payment required",
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                          trailing: !isPaid
-                              ? ElevatedButton(
-                                  onPressed: () {
-                                    Get.to(PayPage(
-                                        account: widget.account,
-                                        rid: request['rid']));
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
-                                  ),
-                                  child: const Text("Pay"),
-                                )
-                              : null,
-                        )),
+                        title: Text(
+                          lawyerData?["name"] ?? 'Unknown User',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          isPaid ? "Tap to chat" : "Payment required",
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        trailing: !isPaid
+                            ? ElevatedButton(
+                                onPressed: () {
+                                  Get.to(PayPage(
+                                      account: widget.account,
+                                      rid: request['rid']));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                ),
+                                child: const Text("Pay"),
+                              )
+                            : null,
+                      ),
+                    ),
                   );
                 },
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

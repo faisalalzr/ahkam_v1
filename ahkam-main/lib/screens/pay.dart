@@ -9,17 +9,21 @@ import 'package:ahakam_v8/keys.dart';
 import 'package:http/http.dart' as http;
 
 class PayPage extends StatefulWidget {
-  const PayPage({super.key, required this.account, required this.rid});
+  const PayPage({
+    super.key,
+    required this.account,
+    required this.rid,
+  });
   final Account account;
   final String rid;
+
   @override
   State<PayPage> createState() => _PayPageState();
 }
 
 class _PayPageState extends State<PayPage> {
-  double amount = 20;
   Map<String, dynamic>? intentPaymentData;
-
+  final double amount = 20;
   Future<List<Map<String, dynamic>>> fetchACCRequests() async {
     var _firestore = FirebaseFirestore.instance;
     QuerySnapshot querySnapshot = await _firestore
